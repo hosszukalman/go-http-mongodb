@@ -1,55 +1,55 @@
 package main
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"net/http"
-	"labix.org/v2/mgo"
-	"labix.org/v2/mgo/bson"
-	"encoding/json"
-	"log"
+    "github.com/julienschmidt/httprouter"
+    "net/http"
+    "labix.org/v2/mgo"
+    "labix.org/v2/mgo/bson"
+    "encoding/json"
+    "log"
 )
 
 func getProfile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var result *interface{}
-	err := mongoCollection.Find(bson.M{"name": ps.ByName("name")}).One(&result)
+    var result *interface{}
+    err := mongoCollection.Find(bson.M{"name": ps.ByName("name")}).One(&result)
     if err != nil {
         http.Error(w, err.Error(), 500)
     } else {
-		data, err := json.Marshal(result)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(data)
-		}
+        data, err := json.Marshal(result)
+        if err != nil {
+            http.Error(w, err.Error(), 500)
+        } else {
+            w.Header().Set("Content-Type", "application/json")
+            w.Write(data)
+        }
     }
 }
 
 func saveProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var m map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&m)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-	}
-	err = mongoCollection.Insert(m)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-	}
+    var m map[string]interface{}
+    err := json.NewDecoder(r.Body).Decode(&m)
+    if err != nil {
+        http.Error(w, err.Error(), 500)
+    }
+    err = mongoCollection.Insert(m)
+    if err != nil {
+        http.Error(w, err.Error(), 500)
+    }
 }
 
 var mongoCollection *mgo.Collection
 
 func main() {
-	session, err := mgo.Dial("localhost")
-	if err != nil {
-		log.Fatal(err)
-	}
-	mongoCollection = session.DB("gohttptest").C("users")
+    session, err := mgo.Dial("localhost")
+    if err != nil {
+        log.Fatal(err)
+    }
+    mongoCollection = session.DB("gohttptest").C("users")
 
-	router := httprouter.New()
+    router := httprouter.New()
 
-	router.GET("/user/:name", getProfile)
-	router.PUT("/user", saveProfile)
+    router.GET("/user/:name", getProfile)
+    router.PUT("/user", saveProfile)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+    log.Fatal(http.ListenAndServe(":8080", router))
 }
