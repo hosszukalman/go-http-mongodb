@@ -1,25 +1,55 @@
 package main
 
 import (
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
+	"encoding/json"
 	"log"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Welcome!\n")
+func getProfile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var result *interface{}
+	err := mongoCollection.Find(bson.M{"name": ps.ByName("name")}).One(&result)
+    if err != nil {
+        http.Error(w, err.Error(), 500)
+    } else {
+		data, err := json.Marshal(result)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(data)
+		}
+    }
 }
 
-func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
-	fmt.Fprintf(w, "Another option to get the param. This is param's name: %s and this is the value: %s\n", ps[0].Key, ps[0].Value)
+func saveProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var m map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
+	err = mongoCollection.Insert(m)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 }
+
+var mongoCollection *mgo.Collection
 
 func main() {
+	session, err := mgo.Dial("localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	mongoCollection = session.DB("gohttptest").C("users")
+
 	router := httprouter.New()
-	router.GET("/", Index)
-	router.GET("/hello/:name", Hello)
+
+	router.GET("/user/:name", getProfile)
+	router.PUT("/user", saveProfile)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
