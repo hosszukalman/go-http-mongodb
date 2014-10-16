@@ -9,6 +9,13 @@ import (
     "log"
 )
 
+func deleteProfile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+    err := mongoCollection.Remove(bson.M{"name": ps.ByName("name")})
+    if err != nil {
+        http.Error(w, err.Error(), 500)
+    }
+}
+
 func getProfile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     var result *interface{}
     err := mongoCollection.Find(bson.M{"name": ps.ByName("name")}).One(&result)
@@ -52,6 +59,7 @@ func main() {
     router := httprouter.New()
 
     router.GET("/user/:name", getProfile)
+    router.DELETE("/user/:name", deleteProfile)
     router.PUT("/user", saveProfile)
 
     log.Fatal(http.ListenAndServe(":8080", router))
