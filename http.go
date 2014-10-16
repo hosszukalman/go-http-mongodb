@@ -31,7 +31,10 @@ func saveProfile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     if err != nil {
         http.Error(w, err.Error(), 500)
     }
-    err = mongoCollection.Insert(m)
+    changeInfo, err := mongoCollection.Upsert(bson.M{"name": m["name"]}, &m)
+    if (changeInfo.Updated != 0) {
+        log.Println("Updated")
+    }
     if err != nil {
         http.Error(w, err.Error(), 500)
     }
