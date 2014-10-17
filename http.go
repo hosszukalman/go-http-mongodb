@@ -10,6 +10,13 @@ import (
 	"net/http"
 )
 
+type Oauth2Storage struct {
+	clients   map[string]osin.Client
+	authorize map[string]*osin.AuthorizeData
+	access    map[string]*osin.AccessData
+	refresh   map[string]string
+}
+
 func deleteProfile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	err := mongoCollection.Remove(bson.M{"name": ps.ByName("name")})
 	if err != nil {
