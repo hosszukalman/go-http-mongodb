@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/goji/httpauth"
 	"github.com/julienschmidt/httprouter"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -62,5 +63,5 @@ func main() {
 	router.DELETE("/user/:name", deleteProfile)
 	router.PUT("/user", saveProfile)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", httpauth.SimpleBasicAuth("user", "pass")(router)))
 }
